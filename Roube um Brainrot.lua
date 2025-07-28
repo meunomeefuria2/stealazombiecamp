@@ -58,22 +58,26 @@ maintab:AddSlider({
 	Default = 5,
 	Color = Color3.fromRGB(255,255,255),
 	Increment = 1,
-	Callback = function
+	ValueName = "speed",
+	Callback = function(Value)
 		if LocalPlayer.Character and LocalPlayer.Character:FindFirstChildOfClass("Humanoid") then
-		LocalPlayer.Character:FindFirstChildOfClass("Humanoid").WalkSpeed = value
+			LocalPlayer.Character:FindFirstChildOfClass("Humanoid").WalkSpeed = Value
+		end
 	end    
 })
 
 maintab:AddSlider({
 	Name = "JUMP-POWER",
 	Min = 0,
-	Max = 20,
-	Default = 5,
+	Max = 200,
+	Default = 50,
 	Color = Color3.fromRGB(255,255,255),
-	Increment = 1,
-	Callback = function
+	Increment = 5,
+	ValueName = "power",
+	Callback = function(Value)
 		if LocalPlayer.Character and LocalPlayer.Character:FindFirstChildOfClass("Humanoid") then
-		LocalPlayer.Character:FindFirstChildOfClass("Humanoid").JumpPower = value
+			LocalPlayer.Character:FindFirstChildOfClass("Humanoid").JumpPower = Value
+		end
 	end    
 })
 
