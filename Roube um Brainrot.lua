@@ -1,69 +1,94 @@
 -- Carrega OrionLib
-local OrionLib = loadstring(game:HttpGet(('https://raw.githubusercontent.com/jensonhirst/Orion/main')))()
+local OrionLib = loadstring(game:HttpGet(('https://raw.githubusercontent.com/jensonhirst/Orion/main/source')))()
 
--- Cria a janela principal
-local Window = OrionLib:MakeWindow({Name = "ZOMBIE CAMP", HidePremium = false, SaveConfig = true, ConfigFolder = "ZombieCampFolder"})
+-- Cria janela principal
+local Window = OrionLib:MakeWindow({
+	Name = "ZOMBIE CAMP",
+	HidePremium = false,
+	SaveConfig = true,
+	ConfigFolder = "ZombieCampFolder"
+})
 
--- Cria a aba principal
+-- Cria aba principal
 local maintab = Window:MakeTab({
 	Name = "Principal",
 	Icon = "rbxassetid://4483345998",
 	PremiumOnly = false
 })
 
-local secoundtab = Window:MakeTab({
-	Name = "RECURSOS EXPERIMENTAIS",
-	Icon = "rbxassetid://4483345998",
-	PremiumOnly = false
-})
-
--- Variáveis
+-- Serviços e variáveis
 local Players = game:GetService("Players")
+local RunService = game:GetService("RunService")
 local LocalPlayer = Players.LocalPlayer
-local Character = LocalPlayer.Character or LocalPlayer.CharacterAdded:Wait()
+
+-- Aguarda personagem e humanoid
+local function getCharacter()
+	local char = LocalPlayer.Character
+	if not char or not char.Parent then
+		char = LocalPlayer.CharacterAdded:Wait()
+	end
+	return char
+end
+
+local Character = getCharacter()
 local Humanoid = Character:WaitForChild("Humanoid")
-local HumanoidRootPart = Character:WaitForChild("HumanoidRootPart")
-local noclipEnabled = false
 local noclipConnection
 
--- Proteção contra kick/desconectar
-local mt = getrawmetatable(game)
-local backup; backup = hookfunction(mt.__namecall, newcclosure(function(self, ...)
-	local args = {...}
-	local method = getnamecallmethod()
-
-	if self == LocalPlayer and (method == "Kick" or method == "kick") then
-		return warn("Tentativa de kick bloqueada")
-	end
-
-	if self:IsA("RemoteEvent") and (self.Name:lower():find("kick") or self.Name:lower():find("load")) then
-		return warn("RemoteEvent suspeito bloqueado")
-	end
-
-	return backup(self, ...)
-end))
+-- Estado do noclip
+local noclipEnabled = false
 
 -- Função para ativar/desativar noclip
 local function toggleNoclip(state)
 	if state then
-		noclipConnection = game:GetService("RunService").Stepped:Connect(function()
-			for _, v in pairs(Character:GetDescendants()) do
-				if v:IsA("BasePart") and v.Name ~= "HumanoidRootPart" and v.Position.Y > HumanoidRootPart.Position.Y - 3 then
-					v.CanCollide = false
+		noclipConnection = RunService.Stepped:Connect(function()
+			local char = getCharacter()
+			if not char then return end
+
+			for _, part in pairs(char:GetDescendants()) do
+				if part:IsA("BasePart") and part.Name ~= "HumanoidRootPart" then
+					-- Só desativa colisão para partes acima do chão (para não cair)
+					if part.Position.Y >= char.HumanoidRootPart.Position.Y - 3 then
+						part.CanCollide = false
+					end
 				end
 			end
 		end)
 	else
 		if noclipConnection then
 			noclipConnection:Disconnect()
+			noclipConnection = nil
 		end
-		for _, v in pairs(Character:GetDescendants()) do
-			if v:IsA("BasePart") then
-				v.CanCollide = true
+
+		local char = getCharacter()
+		if char then
+			for _, part in pairs(char:GetDescendants()) do
+				if part:IsA("BasePart") then
+					part.CanCollide = true
+				end
 			end
 		end
 	end
 end
+
+-- Anti Kick / Teleport básico
+local mt = getrawmetatable(game)
+setreadonly(mt, false)
+local oldNamecall = mt.__namecall
+
+mt.__namecall = newcclosure(function(self, ...)
+	local method = getnamecallmethod()
+	if method == "Kick" and self == LocalPlayer then
+		warn("[ZOMBIE CAMP] Tentativa de Kick bloqueada")
+		return
+	end
+	if method == "TeleportToPlaceInstance" or method == "Teleport" then
+		warn("[ZOMBIE CAMP] Tentativa de Teleport bloqueada")
+		return
+	end
+	return oldNamecall(self, ...)
+end)
+
+setreadonly(mt, true)
 
 -- Toggle do noclip
 maintab:AddToggle({
@@ -72,6 +97,12 @@ maintab:AddToggle({
 	Callback = function(Value)
 		noclipEnabled = Value
 		toggleNoclip(Value)
+		OrionLib:MakeNotification({
+			Name = "ZOMBIE CLIP",
+			Content = Value and "Ativado!" or "Desativado!",
+			Image = "rbxassetid://4483345998",
+			Time = 3
+		})
 	end    
 })
 
@@ -80,12 +111,15 @@ maintab:AddSlider({
 	Name = "WALK-SPEED",
 	Min = 0,
 	Max = 20,
-	Default = 5,
-	Color = Color3.fromRGB(255,255,255),
+	Default = 16,
+	Color = Color3.fromRGB(255, 255, 255),
 	Increment = 1,
-	ValueName = "velocidade",
+	ValueName = "studs/s",
 	Callback = function(Value)
-		Humanoid.WalkSpeed = Value
+		local char = getCharacter()
+		if char and char:FindFirstChildOfClass("Humanoid") then
+			char:FindFirstChildOfClass("Humanoid").WalkSpeed = Value
+		end
 	end    
 })
 
@@ -95,12 +129,16 @@ maintab:AddSlider({
 	Min = 0,
 	Max = 150,
 	Default = 50,
-	Color = Color3.fromRGB(255,255,255),
+	Color = Color3.fromRGB(255, 255, 255),
 	Increment = 1,
-	ValueName = "força",
+	ValueName = "power",
 	Callback = function(Value)
-		Humanoid.JumpPower = Value
+		local char = getCharacter()
+		if char and char:FindFirstChildOfClass("Humanoid") then
+			char:FindFirstChildOfClass("Humanoid").JumpPower = Value
+		end
 	end    
 })
 
+-- Inicializa o Orion UI
 OrionLib:Init()
