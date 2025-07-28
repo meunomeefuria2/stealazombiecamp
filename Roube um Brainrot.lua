@@ -1,108 +1,116 @@
 -- Carrega OrionLib
 local OrionLib = loadstring(game:HttpGet(('https://raw.githubusercontent.com/jensonhirst/Orion/main/source')))()
 
--- Cria a Janela
-local Window = OrionLib:MakeWindow({Name = "HUB DO CURSEDX", HidePremium = false, SaveConfig = false, IntroText = "Player096ofc"})
+-- Cria a janela
+local Window = OrionLib:MakeWindow({
+	Name = "ZOMBIE CAMP", 
+	HidePremium = false, 
+	SaveConfig = true, 
+	ConfigFolder = "ZombieCampConfig"
+})
 
--- Cria a aba principal
+-- Cria aba principal
 local maintab = Window:MakeTab({
-	Name = "Principal",
+	Name = "MAIN",
 	Icon = "rbxassetid://4483345998",
 	PremiumOnly = false
 })
 
--- Variáveis globais
-local noclipEnabled = false
-local player = game.Players.LocalPlayer
-local character = player.Character or player.CharacterAdded:Wait()
-local humanoidRootPart = character:WaitForChild("HumanoidRootPart")
+local secoundtab = Window:MakeTab({
+	Name = "EXPERIMENTAL RESOURCES",
+	Icon = "rbxassetid://4483345998",
+	PremiumOnly = false
+})
 
--- Função Noclip (somente paredes)
-game:GetService("RunService").Stepped:Connect(function()
-	if noclipEnabled then
-		local touchingParts = humanoidRootPart:GetTouchingParts()
-		for _, part in ipairs(touchingParts) do
-			if part:IsA("BasePart") and not part.CanCollide then
-				continue
+-- Variáveis
+local Players = game:GetService("Players")
+local LocalPlayer = Players.LocalPlayer
+local Character = LocalPlayer.Character or LocalPlayer.CharacterAdded:Wait()
+local Humanoid = Character:WaitForChild("Humanoid")
+local HumanoidRootPart = Character:WaitForChild("HumanoidRootPart")
+local NoclipEnabled = false
+local RunService = game:GetService("RunService")
+
+-- Função de noclip (mantém colisão com o chão)
+local function ToggleNoclip()
+	NoclipEnabled = not NoclipEnabled
+	if NoclipEnabled then
+		RunService.Stepped:Connect(function()
+			if NoclipEnabled and Character and Character:FindFirstChild("HumanoidRootPart") then
+				for _, part in pairs(Character:GetDescendants()) do
+					if part:IsA("BasePart") and part.Name ~= "HumanoidRootPart" and part.Name ~= "LowerTorso" and part.Name ~= "RightFoot" and part.Name ~= "LeftFoot" then
+						part.CanCollide = false
+					end
+				end
 			end
-			if math.abs(humanoidRootPart.Position.Y - part.Position.Y) > 3 then
-				continue -- ignora chão e teto
+		end)
+	else
+		for _, part in pairs(Character:GetDescendants()) do
+			if part:IsA("BasePart") then
+				part.CanCollide = true
 			end
-			-- Colide com o chão, não com paredes
-			humanoidRootPart.CanCollide = false
-			return
 		end
 	end
-	humanoidRootPart.CanCollide = true
-end)
+end
 
--- Botão de Noclip
+-- Botão Noclip
 maintab:AddButton({
 	Name = "ZOMBIE CLIP",
 	Callback = function()
-		noclipEnabled = not noclipEnabled
-		OrionLib:MakeNotification({
-			Name = "Noclip",
-			Content = noclipEnabled and "Ativado" or "Desativado",
-			Time = 2
-		})
+		ToggleNoclip()
 	end
 })
 
--- Slider de WalkSpeed
+-- Slider de velocidade
 maintab:AddSlider({
 	Name = "WALK-SPEED",
 	Min = 0,
-	Max = 50,
-	Default = 16,
+	Max = 20,
+	Default = 5,
 	Color = Color3.fromRGB(255, 255, 255),
 	Increment = 1,
-	ValueName = "speed",
+	ValueName = "Studs",
 	Callback = function(Value)
-		local hum = player.Character and player.Character:FindFirstChildOfClass("Humanoid")
-		if hum then
-			hum.WalkSpeed = Value
-		end
-	end
+		Humanoid.WalkSpeed = Value
+	end    
 })
 
--- Slider de JumpPower
+-- Slider de pulo
 maintab:AddSlider({
 	Name = "JUMP-POWER",
 	Min = 0,
-	Max = 200,
+	Max = 150,
 	Default = 50,
 	Color = Color3.fromRGB(255, 255, 255),
-	Increment = 5,
-	ValueName = "pulo",
+	Increment = 1,
+	ValueName = "Power",
 	Callback = function(Value)
-		local hum = player.Character and player.Character:FindFirstChildOfClass("Humanoid")
-		if hum then
-			hum.JumpPower = Value
-		end
-	end
+		Humanoid.JumpPower = Value
+	end    
 })
 
--- Anti Kick e Anti Teleport de servidor
-local oldKick = player.Kick
+-- Anti-Kick básico (não impede todos os métodos)
 local mt = getrawmetatable(game)
 setreadonly(mt, false)
 local oldNamecall = mt.__namecall
 
 mt.__namecall = newcclosure(function(self, ...)
-	local args = {...}
 	local method = getnamecallmethod()
-	if tostring(self) == "Kick" or method == "Kick" then
-		warn("[!] Tentativa de Kick bloqueada.")
+	local args = {...}
+	
+	-- Bloqueia tentativa de kick
+	if method == "Kick" and self == LocalPlayer then
+		warn("Tentativa de Kick bloqueada!")
 		return
 	end
-	if method == "TeleportToPlaceInstance" or method == "Teleport" then
-		warn("[!] Tentativa de troca de experiência bloqueada.")
+	
+	-- Bloqueia teleport para outro jogo
+	if method == "TeleportToPlaceInstance" then
+		warn("Tentativa de teleport bloqueada!")
 		return
 	end
+
 	return oldNamecall(self, unpack(args))
 end)
-
-setreadonly(mt, true)
 
 OrionLib:Init()
