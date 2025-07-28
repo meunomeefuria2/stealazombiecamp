@@ -1,32 +1,35 @@
+-- Carrega OrionLib
 local OrionLib = loadstring(game:HttpGet(('https://raw.githubusercontent.com/jensonhirst/Orion/main/source')))()
 
+-- Serviços e variáveis
 local RunService = game:GetService("RunService")
 local Players = game:GetService("Players")
 local LocalPlayer = Players.LocalPlayer
 
--- NOCLIP
-local noclipEnabled = false
+-- Proteção contra Kick e Teleport
+local mt = getrawmetatable(game)
+setreadonly(mt, false)
 
-local function setNoclip(state)
-	noclipEnabled = state
-	if noclipEnabled then
-		RunService.Stepped:Connect(function()
-			if noclipEnabled and LocalPlayer.Character then
-				for _, part in pairs(LocalPlayer.Character:GetDescendants()) do
-					if part:IsA("BasePart") and part.CanCollide == true then
-						part.CanCollide = false
-					end
-				end
-			end
-		end)
+local oldNamecall = mt.__namecall
+
+mt.__namecall = newcclosure(function(self, ...)
+	local method = getnamecallmethod()
+	if method == "Kick" or method == "kick" then
+		warn("[PROTEÇÃO] Tentativa de kick bloqueada.")
+		return -- impede kick
 	end
-end
+	if self == game:GetService("TeleportService") and method == "Teleport" then
+		warn("[PROTEÇÃO] Tentativa de teleport bloqueada.")
+		return -- impede teleport
+	end
+	return oldNamecall(self, ...)
+end)
 
--- Salva os valores escolhidos
+-- Valores salvos
 local savedWalkSpeed = 5
 local savedJumpPower = 50
 
--- Função que aplica os valores salvos ao Humanoid
+-- Aplicar WalkSpeed e JumpPower
 local function applyValues()
 	local char = LocalPlayer.Character
 	if char then
@@ -38,13 +41,41 @@ local function applyValues()
 	end
 end
 
--- Detecta quando o personagem reaparecer e aplica os valores
+-- Atualiza ao renascer
 LocalPlayer.CharacterAdded:Connect(function()
-	wait(0.1) -- Dá um tempo pro personagem carregar
+	wait(0.1)
 	applyValues()
 end)
 
--- GUI
+-- Noclip
+local noclipEnabled = false
+local noclipConnection = nil
+
+local function setNoclip(state)
+	noclipEnabled = state
+	if noclipConnection then
+		noclipConnection:Disconnect()
+	end
+
+	if noclipEnabled then
+		noclipConnection = RunService.Heartbeat:Connect(function()
+			local char = LocalPlayer.Character
+			if char then
+				local humanoid = char:FindFirstChildOfClass("Humanoid")
+				if humanoid then
+					humanoid:ChangeState(Enum.HumanoidStateType.Physics)
+				end
+				for _, part in pairs(char:GetDescendants()) do
+					if part:IsA("BasePart") then
+						part.CanCollide = false
+					end
+				end
+			end
+		end)
+	end
+end
+
+-- GUI Orion
 local Window = OrionLib:MakeWindow({Name = "Zombies Camp", HidePremium = false, SaveConfig = true, ConfigFolder = "ZombiesConfig"})
 
 local maintab = Window:MakeTab({
