@@ -1,10 +1,3 @@
-local OrionLib = loadstring(game:HttpGet(('https://raw.githubusercontent.com/jensonhirst/Orion/main/source')))()
-
-local noclipEnabled = false
-local RunService = game:GetService("RunService")
-local Players = game:GetService("Players")
-local LocalPlayer = Players.LocalPlayer
-
 -- Função para ativar/desativar o noclip
 local function setNoclip(state)
 	noclipEnabled = state
@@ -21,6 +14,14 @@ local function setNoclip(state)
 		end)
 	end
 end
+
+local OrionLib = loadstring(game:HttpGet(('https://raw.githubusercontent.com/jensonhirst/Orion/main/source')))()
+
+local noclipEnabled = false
+local RunService = game:GetService("RunService")
+local Players = game:GetService("Players")
+local LocalPlayer = Players.LocalPlayer
+
 
 local Window = OrionLib:MakeWindow({Name = "Zombies Camp", HidePremium = false, SaveConfig = true, ConfigFolder = "ZombiesConfig"})
 
@@ -46,7 +47,7 @@ maintab:AddButton({
 	Name = "ZOMBIE CLIP",
 	Callback = function()
         noclipEnabled = not noclipEnabled
-	setNoclip(noclipEnabled)
+		setNoclip(noclipEnabled)
   	end    
 })
 
@@ -58,8 +59,8 @@ maintab:AddSlider({
 	Color = Color3.fromRGB(255,255,255),
 	Increment = 1,
 	Callback = function
-         if LocalPlayer.Character and LocalPlayer.Character:FindFirstChildOfClass("Humanoid") then
-	 LocalPlayer.Character:FindFirstChildOfClass("Humanoid").WalkSpeed = value
+		if LocalPlayer.Character and LocalPlayer.Character:FindFirstChildOfClass("Humanoid") then
+		LocalPlayer.Character:FindFirstChildOfClass("Humanoid").WalkSpeed = value
 	end    
 })
 
@@ -71,8 +72,8 @@ maintab:AddSlider({
 	Color = Color3.fromRGB(255,255,255),
 	Increment = 1,
 	Callback = function
-	 if LocalPlayer.Character and LocalPlayer.Character:FindFirstChildOfClass("Humanoid") then
-	 LocalPlayer.Character:FindFirstChildOfClass("Humanoid").JumpPower = value
+		if LocalPlayer.Character and LocalPlayer.Character:FindFirstChildOfClass("Humanoid") then
+		LocalPlayer.Character:FindFirstChildOfClass("Humanoid").JumpPower = value
 	end    
 })
 
