@@ -6,24 +6,18 @@ local RunService = game:GetService("RunService")
 local Players = game:GetService("Players")
 local LocalPlayer = Players.LocalPlayer
 
--- Proteção contra Kick e Teleport
-local mt = getrawmetatable(game)
-setreadonly(mt, false)
-
-local oldNamecall = mt.__namecall
-
-mt.__namecall = newcclosure(function(self, ...)
-	local method = getnamecallmethod()
-	if method == "Kick" or method == "kick" then
-		warn("[PROTEÇÃO] Tentativa de kick bloqueada.")
-		return -- impede kick
+-- Proteção segura contra kick (sem mexer em metatable)
+local success, errorMsg = pcall(function()
+	local oldKick = LocalPlayer.Kick
+	LocalPlayer.Kick = function(...)
+		warn("[PROTEÇÃO] Tentativa de Kick bloqueada!")
+		return -- bloqueia kick sem crash
 	end
-	if self == game:GetService("TeleportService") and method == "Teleport" then
-		warn("[PROTEÇÃO] Tentativa de teleport bloqueada.")
-		return -- impede teleport
-	end
-	return oldNamecall(self, ...)
 end)
+
+if not success then
+	warn("[Proteção] Kick não pôde ser sobrescrito:", errorMsg)
+end
 
 -- Valores salvos
 local savedWalkSpeed = 5
