@@ -60,55 +60,34 @@ local NoclipButton = MainTab:CreateButton({
    noclipEnabled = not noclipEnabled
        
        if noclipEnabled then
-           -- Ativar noclip
            connection = RunService.Stepped:Connect(function()
-               if player.Character and player.Character:FindFirstChild("Humanoid") then
-                   local character = player.Character
-                   
-                   -- Desativar colisão apenas para partes do corpo (não para os pés)
-                   for _, part in pairs(character:GetChildren()) do
-                       if part:IsA("BasePart") and part.Name ~= "HumanoidRootPart" then
-                           if part.Name == "LeftFoot" or part.Name == "RightFoot" or 
-                              part.Name == "LeftLowerLeg" or part.Name == "RightLowerLeg" then
-                               -- Manter colisão nos pés e pernas inferiores para não cair
-                               part.CanCollide = true
-                           else
-                               -- Remover colisão do resto do corpo para atravessar paredes
-                               part.CanCollide = false
-                           end
+               if player.Character then
+                   for i, v in pairs(player.Character:GetDescendants()) do
+                       if v:IsA("BasePart") then
+                           v.CanCollide = false
                        end
-                   end
-                   
-                   -- Alternativa: usar apenas a HumanoidRootPart
-                   if character:FindFirstChild("HumanoidRootPart") then
-                       character.HumanoidRootPart.CanCollide = false
                    end
                end
            end)
-           
-           print("Noclip ativado - você pode atravessar paredes!")
+           print("Noclip ativado!")
        else
-           -- Desativar noclip
            if connection then
                connection:Disconnect()
-               connection = nil
            end
            
            if player.Character then
-               -- Restaurar colisão normal
-               for _, part in pairs(player.Character:GetChildren()) do
-                   if part:IsA("BasePart") then
-                       part.CanCollide = true
+               for i, v in pairs(player.Character:GetDescendants()) do
+                   if v:IsA("BasePart") then
+                       v.CanCollide = true
                    end
                end
            end
-           
            print("Noclip desativado!")
        end
    end,
 })
 
-local WalkSpeedSlider = Tab:CreateSlider({
+local WalkSpeedSlider = MainTab:CreateSlider({
    Name = "Walk Speed",
    Range = {1, 300},
    Increment = 1,
@@ -123,7 +102,7 @@ local WalkSpeedSlider = Tab:CreateSlider({
 })
 
 -- Slider para JumpPower
-local JumpPowerSlider = Tab:CreateSlider({
+local JumpPowerSlider = MainTab:CreateSlider({
    Name = "Jump Power",
    Range = {10, 200},
    Increment = 5,
