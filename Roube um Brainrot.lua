@@ -1,128 +1,108 @@
 -- Carrega OrionLib
 local OrionLib = loadstring(game:HttpGet(('https://raw.githubusercontent.com/jensonhirst/Orion/main/source')))()
 
--- Serviços e variáveis
-local RunService = game:GetService("RunService")
-local Players = game:GetService("Players")
-local LocalPlayer = Players.LocalPlayer
+-- Cria a Janela
+local Window = OrionLib:MakeWindow({Name = "HUB DO CURSEDX", HidePremium = false, SaveConfig = false, IntroText = "Player096ofc"})
 
--- Proteção segura contra kick (sem mexer em metatable)
-local success, errorMsg = pcall(function()
-	local oldKick = LocalPlayer.Kick
-	LocalPlayer.Kick = function(...)
-		warn("[PROTEÇÃO] Tentativa de Kick bloqueada!")
-		return -- bloqueia kick sem crash
-	end
-end)
-
-if not success then
-	warn("[Proteção] Kick não pôde ser sobrescrito:", errorMsg)
-end
-
--- Valores salvos
-local savedWalkSpeed = 5
-local savedJumpPower = 50
-
--- Aplicar WalkSpeed e JumpPower
-local function applyValues()
-	local char = LocalPlayer.Character
-	if char then
-		local humanoid = char:FindFirstChildOfClass("Humanoid")
-		if humanoid then
-			humanoid.WalkSpeed = savedWalkSpeed
-			humanoid.JumpPower = savedJumpPower
-		end
-	end
-end
-
--- Atualiza ao renascer
-LocalPlayer.CharacterAdded:Connect(function()
-	wait(0.1)
-	applyValues()
-end)
-
--- Noclip
-local noclipEnabled = false
-local noclipConnection = nil
-
-local function setNoclip(state)
-	noclipEnabled = state
-	if noclipConnection then
-		noclipConnection:Disconnect()
-	end
-
-	if noclipEnabled then
-		noclipConnection = RunService.Heartbeat:Connect(function()
-			local char = LocalPlayer.Character
-			if char then
-				local humanoid = char:FindFirstChildOfClass("Humanoid")
-				if humanoid then
-					humanoid:ChangeState(Enum.HumanoidStateType.Physics)
-				end
-				for _, part in pairs(char:GetDescendants()) do
-					if part:IsA("BasePart") then
-						part.CanCollide = false
-					end
-				end
-			end
-		end)
-	end
-end
-
--- GUI Orion
-local Window = OrionLib:MakeWindow({Name = "Zombies Camp", HidePremium = false, SaveConfig = true, ConfigFolder = "ZombiesConfig"})
-
+-- Cria a aba principal
 local maintab = Window:MakeTab({
-	Name = "Roube Bases",
+	Name = "Principal",
 	Icon = "rbxassetid://4483345998",
 	PremiumOnly = false
 })
 
-OrionLib:MakeNotification({
-	Name = "OBRIGADO POR EXECUTAR NOSSO ZOMBIECAMP SCRIPT",
-	Content = "APROVEITE AS FUNÇÕES DO NOSSO SCRIPT!",
-	Image = "rbxassetid://4483345998",
-	Time = 7
-})
+-- Variáveis globais
+local noclipEnabled = false
+local player = game.Players.LocalPlayer
+local character = player.Character or player.CharacterAdded:Wait()
+local humanoidRootPart = character:WaitForChild("HumanoidRootPart")
 
-maintab:AddSection({
-	Name = "DOM LORENZO"
-})
+-- Função Noclip (somente paredes)
+game:GetService("RunService").Stepped:Connect(function()
+	if noclipEnabled then
+		local touchingParts = humanoidRootPart:GetTouchingParts()
+		for _, part in ipairs(touchingParts) do
+			if part:IsA("BasePart") and not part.CanCollide then
+				continue
+			end
+			if math.abs(humanoidRootPart.Position.Y - part.Position.Y) > 3 then
+				continue -- ignora chão e teto
+			end
+			-- Colide com o chão, não com paredes
+			humanoidRootPart.CanCollide = false
+			return
+		end
+	end
+	humanoidRootPart.CanCollide = true
+end)
 
+-- Botão de Noclip
 maintab:AddButton({
 	Name = "ZOMBIE CLIP",
 	Callback = function()
 		noclipEnabled = not noclipEnabled
-		setNoclip(noclipEnabled)
-	end    
+		OrionLib:MakeNotification({
+			Name = "Noclip",
+			Content = noclipEnabled and "Ativado" or "Desativado",
+			Time = 2
+		})
+	end
 })
 
+-- Slider de WalkSpeed
 maintab:AddSlider({
 	Name = "WALK-SPEED",
 	Min = 0,
-	Max = 20,
-	Default = 5,
-	Color = Color3.fromRGB(255,255,255),
+	Max = 50,
+	Default = 16,
+	Color = Color3.fromRGB(255, 255, 255),
 	Increment = 1,
 	ValueName = "speed",
 	Callback = function(Value)
-		savedWalkSpeed = Value
-		applyValues()
-	end    
+		local hum = player.Character and player.Character:FindFirstChildOfClass("Humanoid")
+		if hum then
+			hum.WalkSpeed = Value
+		end
+	end
 })
 
+-- Slider de JumpPower
 maintab:AddSlider({
 	Name = "JUMP-POWER",
 	Min = 0,
 	Max = 200,
 	Default = 50,
-	Color = Color3.fromRGB(255,255,255),
+	Color = Color3.fromRGB(255, 255, 255),
 	Increment = 5,
-	ValueName = "power",
+	ValueName = "pulo",
 	Callback = function(Value)
-		savedJumpPower = Value
-		applyValues()
-	end    
+		local hum = player.Character and player.Character:FindFirstChildOfClass("Humanoid")
+		if hum then
+			hum.JumpPower = Value
+		end
+	end
 })
+
+-- Anti Kick e Anti Teleport de servidor
+local oldKick = player.Kick
+local mt = getrawmetatable(game)
+setreadonly(mt, false)
+local oldNamecall = mt.__namecall
+
+mt.__namecall = newcclosure(function(self, ...)
+	local args = {...}
+	local method = getnamecallmethod()
+	if tostring(self) == "Kick" or method == "Kick" then
+		warn("[!] Tentativa de Kick bloqueada.")
+		return
+	end
+	if method == "TeleportToPlaceInstance" or method == "Teleport" then
+		warn("[!] Tentativa de troca de experiência bloqueada.")
+		return
+	end
+	return oldNamecall(self, unpack(args))
+end)
+
+setreadonly(mt, true)
 
 OrionLib:Init()
