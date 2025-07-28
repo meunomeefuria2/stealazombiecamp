@@ -1,8 +1,15 @@
--- Função para ativar/desativar o noclip
+local OrionLib = loadstring(game:HttpGet(('https://raw.githubusercontent.com/jensonhirst/Orion/main/source')))()
+
+local RunService = game:GetService("RunService")
+local Players = game:GetService("Players")
+local LocalPlayer = Players.LocalPlayer
+
+-- NOCLIP
+local noclipEnabled = false
+
 local function setNoclip(state)
 	noclipEnabled = state
 	if noclipEnabled then
-		-- Loop para aplicar noclip enquanto estiver ativo
 		RunService.Stepped:Connect(function()
 			if noclipEnabled and LocalPlayer.Character then
 				for _, part in pairs(LocalPlayer.Character:GetDescendants()) do
@@ -15,14 +22,29 @@ local function setNoclip(state)
 	end
 end
 
-local OrionLib = loadstring(game:HttpGet(('https://raw.githubusercontent.com/jensonhirst/Orion/main/source')))()
+-- Salva os valores escolhidos
+local savedWalkSpeed = 5
+local savedJumpPower = 50
 
-local noclipEnabled = false
-local RunService = game:GetService("RunService")
-local Players = game:GetService("Players")
-local LocalPlayer = Players.LocalPlayer
+-- Função que aplica os valores salvos ao Humanoid
+local function applyValues()
+	local char = LocalPlayer.Character
+	if char then
+		local humanoid = char:FindFirstChildOfClass("Humanoid")
+		if humanoid then
+			humanoid.WalkSpeed = savedWalkSpeed
+			humanoid.JumpPower = savedJumpPower
+		end
+	end
+end
 
+-- Detecta quando o personagem reaparecer e aplica os valores
+LocalPlayer.CharacterAdded:Connect(function()
+	wait(0.1) -- Dá um tempo pro personagem carregar
+	applyValues()
+end)
 
+-- GUI
 local Window = OrionLib:MakeWindow({Name = "Zombies Camp", HidePremium = false, SaveConfig = true, ConfigFolder = "ZombiesConfig"})
 
 local maintab = Window:MakeTab({
@@ -38,17 +60,16 @@ OrionLib:MakeNotification({
 	Time = 7
 })
 
-local Section = maintab:AddSection({
+maintab:AddSection({
 	Name = "DOM LORENZO"
 })
-
 
 maintab:AddButton({
 	Name = "ZOMBIE CLIP",
 	Callback = function()
-        noclipEnabled = not noclipEnabled
+		noclipEnabled = not noclipEnabled
 		setNoclip(noclipEnabled)
-  	end    
+	end    
 })
 
 maintab:AddSlider({
@@ -60,9 +81,8 @@ maintab:AddSlider({
 	Increment = 1,
 	ValueName = "speed",
 	Callback = function(Value)
-		if LocalPlayer.Character and LocalPlayer.Character:FindFirstChildOfClass("Humanoid") then
-			LocalPlayer.Character:FindFirstChildOfClass("Humanoid").WalkSpeed = Value
-		end
+		savedWalkSpeed = Value
+		applyValues()
 	end    
 })
 
@@ -75,9 +95,8 @@ maintab:AddSlider({
 	Increment = 5,
 	ValueName = "power",
 	Callback = function(Value)
-		if LocalPlayer.Character and LocalPlayer.Character:FindFirstChildOfClass("Humanoid") then
-			LocalPlayer.Character:FindFirstChildOfClass("Humanoid").JumpPower = Value
-		end
+		savedJumpPower = Value
+		applyValues()
 	end    
 })
 
