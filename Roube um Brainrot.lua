@@ -46,7 +46,7 @@ maintab:AddButton({
 	Name = "ZOMBIE CLIP",
 	Callback = function()
         noclipEnabled = not noclipEnabled
-		setNoclip(noclipEnabled)
+	setNoclip(noclipEnabled)
   	end    
 })
 
@@ -58,8 +58,8 @@ maintab:AddSlider({
 	Color = Color3.fromRGB(255,255,255),
 	Increment = 1,
 	Callback = function
-		if LocalPlayer.Character and LocalPlayer.Character:FindFirstChildOfClass("Humanoid") then
-		LocalPlayer.Character:FindFirstChildOfClass("Humanoid").WalkSpeed = value
+         if LocalPlayer.Character and LocalPlayer.Character:FindFirstChildOfClass("Humanoid") then
+	 LocalPlayer.Character:FindFirstChildOfClass("Humanoid").WalkSpeed = value
 	end    
 })
 
@@ -71,8 +71,8 @@ maintab:AddSlider({
 	Color = Color3.fromRGB(255,255,255),
 	Increment = 1,
 	Callback = function
-		if LocalPlayer.Character and LocalPlayer.Character:FindFirstChildOfClass("Humanoid") then
-		LocalPlayer.Character:FindFirstChildOfClass("Humanoid").JumpPower = value
+	 if LocalPlayer.Character and LocalPlayer.Character:FindFirstChildOfClass("Humanoid") then
+	 LocalPlayer.Character:FindFirstChildOfClass("Humanoid").JumpPower = value
 	end    
 })
 
