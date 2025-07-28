@@ -58,58 +58,60 @@ local EXPTab = Window:CreateTab("RECURSOS EXPERIMENTAIS", 4483362458) -- Title, 
 local NoclipButton = MainTab:CreateButton({
    Name = "ZOMBIE-CLIP",
    Callback = function()
-   noclipEnabled = not noclipEnabled
-       
+   Callback = function()
        if noclipEnabled then
-           connection = RunService.Heartbeat:Connect(function()
-               local currentTime = tick()
-               
-               -- Atualizar apenas a cada 0.1 segundos para reduzir lag
-               if currentTime - lastUpdate > 0.1 then
-                   lastUpdate = currentTime
-                   
-                   if player.Character and player.Character:FindFirstChild("HumanoidRootPart") then
-                       for _, part in pairs(player.Character:GetChildren()) do
-                           if part:IsA("BasePart") then
-                               part.CanCollide = false
-                           end
-                       end
-                       
-                       -- Manter o HumanoidRootPart sempre sem colisão
-                       player.Character.HumanoidRootPart.CanCollide = false
-                   end
-               end
-           end)
-           print("Noclip ON")
-       else
+           -- Desativar noclip
+           noclipEnabled = false
            if connection then
                connection:Disconnect()
                connection = nil
            end
            
-           -- Restaurar colisão
            if player.Character then
-               for _, part in pairs(player.Character:GetChildren()) do
-                   if part:IsA("BasePart") and part.Name ~= "HumanoidRootPart" then
-                       part.CanCollide = true
+               for _, v in pairs(player.Character:GetDescendants()) do
+                   if v:IsA("BasePart") and v.Name ~= "HumanoidRootPart" then
+                       v.CanCollide = true
                    end
-               end
-               -- HumanoidRootPart sempre sem colisão por padrão
-               if player.Character:FindFirstChild("HumanoidRootPart") then
-                   player.Character.HumanoidRootPart.CanCollide = false
                end
            end
            print("Noclip OFF")
+       else
+           -- Ativar noclip
+           noclipEnabled = true
+           connection = RunService.Stepped:Connect(function()
+               if player.Character then
+                   for _, v in pairs(player.Character:GetDescendants()) do
+                       if v:IsA("BasePart") and v.Name ~= "HumanoidRootPart" then
+                           v.CanCollide = false
+                       end
+                   end
+               end
+           end)
+           print("Noclip ON")
        end
    end,
 })
 
--- Slider para JumpPower
+local WalkSpeedSlider = MainTab:CreateSlider({
+   Name = "Walk Speed",
+   Range = {1, 100},
+   Increment = 1,
+   Suffix = " Speed",
+   CurrentValue = 16,
+   Flag = "WalkSpeedSlider",
+   Callback = function(Value)
+       if player.Character and player.Character:FindFirstChild("Humanoid") then
+           player.Character.Humanoid.WalkSpeed = Value
+       end
+   end,
+})
+
+-- Slider para JumpPower  
 local JumpPowerSlider = MainTab:CreateSlider({
    Name = "Jump Power",
    Range = {10, 200},
    Increment = 5,
-   Suffix = " Power",
+   Suffix = " Power", 
    CurrentValue = 50,
    Flag = "JumpPowerSlider",
    Callback = function(Value)
@@ -118,3 +120,14 @@ local JumpPowerSlider = MainTab:CreateSlider({
        end
    end,
 })
+
+-- Reaplicar valores quando respawnar
+player.CharacterAdded:Connect(function(character)
+   wait(1) -- Esperar o personagem carregar completamente
+   
+   local humanoid = character:FindFirstChild("Humanoid")
+   if humanoid then
+       humanoid.WalkSpeed = 16 -- Valor padrão
+       humanoid.JumpPower = 50  -- Valor padrão
+   end
+end)
