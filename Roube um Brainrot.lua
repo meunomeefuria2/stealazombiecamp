@@ -6,11 +6,12 @@ local RunService = game:GetService("RunService")
 local player = Players.LocalPlayer
 local noclipEnabled = false
 local connection
+local lastUpdate = 0
 
 local Window = Rayfield:CreateWindow({
    Name = "ZOMBIE-CAMP HUB",
    Icon = 0, -- Icon in Topbar. Can use Lucide Icons (string) or Roblox Image (number). 0 to use no icon (default).
-   LoadingTitle = "BRR BRR PATAPIM",
+   LoadingTitle = "MIA KHALIFA COM PINTO",
    LoadingSubtitle = "by Kaby/BlueFurry",
    ShowText = "Rayfield", -- for mobile users to unhide rayfield, change if you'd like
    Theme = "Amethyst", -- Check https://docs.sirius.menu/rayfield/configuration/themes
@@ -60,43 +61,45 @@ local NoclipButton = MainTab:CreateButton({
    noclipEnabled = not noclipEnabled
        
        if noclipEnabled then
-           connection = RunService.Stepped:Connect(function()
-               if player.Character then
-                   for i, v in pairs(player.Character:GetDescendants()) do
-                       if v:IsA("BasePart") then
-                           v.CanCollide = false
+           connection = RunService.Heartbeat:Connect(function()
+               local currentTime = tick()
+               
+               -- Atualizar apenas a cada 0.1 segundos para reduzir lag
+               if currentTime - lastUpdate > 0.1 then
+                   lastUpdate = currentTime
+                   
+                   if player.Character and player.Character:FindFirstChild("HumanoidRootPart") then
+                       for _, part in pairs(player.Character:GetChildren()) do
+                           if part:IsA("BasePart") then
+                               part.CanCollide = false
+                           end
                        end
+                       
+                       -- Manter o HumanoidRootPart sempre sem colisão
+                       player.Character.HumanoidRootPart.CanCollide = false
                    end
                end
            end)
-           print("Noclip ativado!")
+           print("Noclip ON")
        else
            if connection then
                connection:Disconnect()
+               connection = nil
            end
            
+           -- Restaurar colisão
            if player.Character then
-               for i, v in pairs(player.Character:GetDescendants()) do
-                   if v:IsA("BasePart") then
-                       v.CanCollide = true
+               for _, part in pairs(player.Character:GetChildren()) do
+                   if part:IsA("BasePart") and part.Name ~= "HumanoidRootPart" then
+                       part.CanCollide = true
                    end
                end
+               -- HumanoidRootPart sempre sem colisão por padrão
+               if player.Character:FindFirstChild("HumanoidRootPart") then
+                   player.Character.HumanoidRootPart.CanCollide = false
+               end
            end
-           print("Noclip desativado!")
-       end
-   end,
-})
-
-local WalkSpeedSlider = MainTab:CreateSlider({
-   Name = "Walk Speed",
-   Range = {1, 300},
-   Increment = 1,
-   Suffix = " Speed",
-   CurrentValue = 16,
-   Flag = "WalkSpeedSlider",
-   Callback = function(Value)
-       if player.Character and player.Character:FindFirstChild("Humanoid") then
-           player.Character.Humanoid.WalkSpeed = Value
+           print("Noclip OFF")
        end
    end,
 })
