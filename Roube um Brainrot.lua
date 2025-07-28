@@ -6,7 +6,6 @@ local RunService = game:GetService("RunService")
 local player = Players.LocalPlayer
 local noclipEnabled = false
 local connection
-local lastUpdate = 0
 
 local Window = Rayfield:CreateWindow({
    Name = "ZOMBIE-CAMP HUB",
@@ -55,9 +54,9 @@ Rayfield:Notify({
 local MainTab = Window:CreateTab("PRINCIPAL", 4483362458) -- Title, Image
 local EXPTab = Window:CreateTab("RECURSOS EXPERIMENTAIS", 4483362458) -- Title, Image
 
+-- BOTÃO NOCLIP CORRIGIDO
 local NoclipButton = MainTab:CreateButton({
    Name = "ZOMBIE-CLIP",
-   Callback = function()
    Callback = function()
        if noclipEnabled then
            -- Desativar noclip
@@ -92,6 +91,7 @@ local NoclipButton = MainTab:CreateButton({
    end,
 })
 
+-- SLIDER WALKSPEED
 local WalkSpeedSlider = MainTab:CreateSlider({
    Name = "Walk Speed",
    Range = {1, 100},
@@ -106,7 +106,7 @@ local WalkSpeedSlider = MainTab:CreateSlider({
    end,
 })
 
--- Slider para JumpPower  
+-- SLIDER JUMPPOWER
 local JumpPowerSlider = MainTab:CreateSlider({
    Name = "Jump Power",
    Range = {10, 200},
